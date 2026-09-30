@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07070c">
+<title>WRUNETTEST</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07070c;
+  --surface:rgba(255,255,255,.035);
+  --surface-2:rgba(255,255,255,.06);
+  --border:rgba(255,255,255,.07);
+  --border-2:rgba(255,255,255,.12);
+  --text:#f5f5f7;
+  --text-2:#a8acbb;
+  --muted:#5f6274;
+  --cyan:#00e5ff;
+  --violet:#8b5cf6;
+  --pink:#f43f5e;
+  --green:#10b981;
+  --amber:#fbbf24;
+  --red:#ef4444;
+}
+html,body{height:100%}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;letter-spacing:-.011em;font-size:14px;line-height:1.5}
+
+/* Анимированный фон */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.blob{position:absolute;border-radius:50%;filter:blur(120px);opacity:.35;animation:blobMove 25s ease-in-out infinite}
+.blob.b1{width:500px;height:500px;background:#4f46e5;top:-10%;left:-10%}
+.blob.b2{width:450px;height:450px;background:#00e5ff;bottom:-15%;right:-10%;animation-delay:-8s}
+.blob.b3{width:400px;height:400px;background:#f43f5e;top:40%;left:50%;opacity:.18;animation-delay:-15s}
+@keyframes blobMove{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(60px,-40px) scale(1.1)}
+  66%{transform:translate(-40px,50px) scale(.95)}
+}
+.bg-grid{position:absolute;inset:0;background-image:
+  linear-gradient(rgba(255,255,255,.013) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.013) 1px,transparent 1px);
+  background-size:56px 56px;
+  -webkit-mask-image:radial-gradient(ellipse 65% 55% at 50% 40%,#000 20%,transparent 80%);
+  mask-image:radial-gradient(ellipse 65% 55% at 50% 40%,#000 20%,transparent 80%)}
+
+.app{position:relative;z-index:2;max-width:600px;margin:0 auto;padding:28px 22px 60px}
+
+/* HEADER */
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;gap:12px}
+.brand-name{font-size:18px;font-weight:700;letter-spacing:-.025em;color:#fff;line-height:1}
+.brand-sub{font-size:11.5px;color:var(--muted);margin-top:3px;font-weight:500}
+.server-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 12px;border-radius:100px;
+  background:var(--surface);border:1px solid var(--border);
+  font-size:11.5px;color:var(--text-2);font-weight:500;
+  cursor:pointer;transition:all .25s cubic-bezier(.25,.9,.35,1);
+  font-variant-numeric:tabular-nums;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.server-pill:hover{border-color:rgba(0,229,255,.35);color:var(--cyan);transform:translateY(-1px)}
+.server-pill .dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:dotPulse 2s ease-in-out infinite}
+@keyframes dotPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+/* TABS */
+.tabs{display:flex;gap:4px;padding:4px;margin-bottom:22px;background:var(--surface);border:1px solid var(--border);border-radius:12px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.tab{
+  flex:1;padding:9px 10px;border:none;border-radius:9px;background:transparent;
+  color:var(--muted);font-family:inherit;font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .3s cubic-bezier(.25,.9,.35,1);
+  position:relative;
+}
+.tab:hover{color:var(--text-2)}
+.tab.on{
+  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.035));
+  color:var(--text);
+  box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 4px 12px -6px rgba(0,0,0,.6);
+}
+.tab.on::after{
+  content:'';position:absolute;bottom:-1px;left:30%;right:30%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,229,255,.5),transparent);
+}
+.panel{display:none}
+.panel.on{display:block;animation:fadeUp .5s cubic-bezier(.25,.9,.35,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* GAUGE */
+.gauge-wrap{position:relative;width:100%;max-width:400px;margin:0 auto;aspect-ratio:1/0.94}
+#gauge{width:100%;height:100%;display:block;position:relative;z-index:2}
+.readout{position:absolute;left:0;right:0;top:54%;transform:translateY(-50%);text-align:center;pointer-events:none;z-index:3}
+.value-row{display:inline-flex;align-items:baseline;justify-content:center;gap:6px}
+.value{font-size:clamp(46px,12vw,68px);font-weight:700;letter-spacing:-.05em;line-height:1;color:#fff;font-variant-numeric:tabular-nums;transition:filter .3s}
+.value.active{filter:drop-shadow(0 0 30px rgba(0,229,255,.5))}
+.unit{font-size:14px;font-weight:500;color:var(--text-2)}
+.state{margin-top:10px;font-size:12.5px;color:var(--muted);font-weight:500;transition:color .3s}
+.state.live{color:var(--cyan)}
+
+/* BUTTON */
+.cta{
+  width:100%;padding:15px;border:none;border-radius:100px;
+  font-family:inherit;font-size:14px;font-weight:600;letter-spacing:-.005em;
+  cursor:pointer;color:#07070c;
+  background:linear-gradient(180deg,#fff,#e6e8ee);
+  margin-top:14px;position:relative;overflow:hidden;
+  transition:transform .3s cubic-bezier(.25,.9,.35,1),box-shadow .3s;
+  box-shadow:0 10px 30px -12px rgba(255,255,255,.3),0 1px 0 rgba(255,255,255,.6) inset;
+}
+.cta:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 40px -14px rgba(0,229,255,.4),0 1px 0 rgba(255,255,255,.6) inset}
+.cta:active:not(:disabled){transform:translateY(0) scale(.99)}
+.cta:disabled{opacity:.6;cursor:not-allowed}
+.cta.live{color:#fff;background:linear-gradient(135deg,#0891b2,#7c3aed);box-shadow:0 12px 36px -12px rgba(139,92,246,.7)}
+.cta.live::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);animation:sheen 2s linear infinite}
+@keyframes sheen{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.cta.secondary{background:transparent;color:#fff;border:1px solid var(--border);box-shadow:none;margin-top:8px;border-radius:100px;padding:13px;font-size:13px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.cta.secondary:hover:not(:disabled){background:var(--surface-2);border-color:var(--border-2)}
+
+/* CARDS */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:22px 0 24px}
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:13px 11px;text-align:left;
+  transition:all .5s cubic-bezier(.25,.9,.35,1);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  position:relative;overflow:hidden;
+  animation:cardIn .5s cubic-bezier(.25,.9,.35,1) backwards;
+}
+.card:nth-child(1){animation-delay:.05s}.card:nth-child(2){animation-delay:.1s}
+.card:nth-child(3){animation-delay:.15s}.card:nth-child(4){animation-delay:.2s}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card.on{border-color:rgba(0,229,255,.35);background:rgba(0,229,255,.06)}
+.card.ok{border-color:rgba(16,185,129,.28);background:rgba(16,185,129,.05)}
+.card-title{font-size:9.5px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;transition:color .3s}
+.card.on .card-title{color:var(--cyan)}
+.card.ok .card-title{color:var(--green)}
+.card-num{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;color:#fff;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.card-unit{font-size:9.5px;color:var(--muted);font-weight:500;margin-top:4px}
+
+/* SETTINGS (внизу Speed) */
+.set-block{
+  margin-top:8px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:all .4s cubic-bezier(.25,.9,.35,1);
+}
+.set-toggle{
+  width:100%;padding:14px 18px;border:none;background:transparent;
+  color:var(--text);font-family:inherit;font-size:12.5px;font-weight:600;
+  cursor:pointer;display:flex;justify-content:space-between;align-items:center;
+  transition:background .2s;
+}
+.set-toggle:hover{background:var(--surface-2)}
+.set-toggle .arrow{width:14px;height:14px;transition:transform .4s cubic-bezier(.25,.9,.35,1);color:var(--muted)}
+.set-block.open .set-toggle .arrow{transform:rotate(180deg)}
+.set-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.25,.9,.35,1)}
+.set-block.open .set-body{max-height:400px}
+.set-row{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;gap:12px;border-top:1px solid var(--border)}
+.set-label{font-size:12px;font-weight:500;color:var(--text)}
+.set-desc{font-size:10.5px;color:var(--muted);margin-top:1px}
+.set-group{display:flex;gap:4px;flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:3px}
+.set-btn{
+  padding:5px 10px;border:none;border-radius:6px;background:transparent;
+  color:var(--muted);font-family:inherit;font-size:10.5px;font-weight:600;
+  cursor:pointer;transition:all .25s cubic-bezier(.25,.9,.35,1);
+}
+.set-btn:hover{color:var(--text-2)}
+.set-btn.active{background:linear-gradient(180deg,rgba(0,229,255,.15),rgba(0,229,255,.05));color:var(--cyan);box-shadow:0 0 0 1px rgba(0,229,255,.2) inset}
+
+/* HISTORY */
+.hist{margin-top:22px}
+.hist-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:0 4px}
+.hist-title{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.hist-clear{background:none;border:none;color:var(--muted);font-family:inherit;font-size:11px;font-weight:500;cursor:pointer;padding:5px 10px;border-radius:7px;transition:all .2s}
+.hist-clear:hover{color:var(--pink);background:rgba(244,63,94,.1)}
+.hist-list{display:flex;flex-direction:column;gap:6px}
+.hist-item{
+  display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;
+  padding:12px 15px;background:var(--surface);border:1px solid var(--border);
+  border-radius:11px;font-size:12.5px;
+  transition:all .3s cubic-bezier(.25,.9,.35,1);
+  animation:histIn .5s cubic-bezier(.25,.9,.35,1);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+@keyframes histIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.hist-item:hover{border-color:var(--border-2);transform:translateX(3px)}
+.hist-time{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted)}
+.hist-vals{display:flex;gap:14px;justify-content:flex-end;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-variant-numeric:tabular-nums}
+.hist-vals b{color:#fff;font-weight:600}
+.hist-vals span{color:var(--muted)}
+.hist-empty{color:var(--muted);text-align:center;font-size:12px;padding:32px 20px;border:1px dashed var(--border);border-radius:11px}
+
+/* SUITE */
+.suite-hero{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:18px;margin-bottom:14px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.suite-hero h2{font-size:14px;font-weight:700;color:#fff;margin-bottom:5px;letter-spacing:-.015em}
+.suite-hero p{font-size:11.5px;color:var(--text-2);line-height:1.55}
+.suite-hero code{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(0,229,255,.08);color:var(--cyan);padding:1px 5px;border-radius:4px;border:1px solid rgba(0,229,255,.15)}
+.suite-progress{margin-top:12px;height:2px;border-radius:1px;background:rgba(255,255,255,.06);overflow:hidden;display:none}
+.suite-progress.on{display:block}
+.suite-progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .5s cubic-bezier(.25,.9,.35,1);box-shadow:0 0 10px rgba(0,229,255,.6)}
+
+/* TESTS */
+.tests{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.test{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:11px 14px;position:relative;overflow:hidden;
+  transition:all .4s cubic-bezier(.25,.9,.35,1);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  animation:testIn .4s cubic-bezier(.25,.9,.35,1) backwards;
+}
+.test:nth-child(1){animation-delay:.02s}.test:nth-child(2){animation-delay:.05s}
+.test:nth-child(3){animation-delay:.08s}.test:nth-child(4){animation-delay:.11s}
+.test:nth-child(5){animation-delay:.14s}.test:nth-child(6){animation-delay:.17s}
+.test:nth-child(7){animation-delay:.2s}.test:nth-child(8){animation-delay:.23s}
+.test:nth-child(9){animation-delay:.26s}.test:nth-child(10){animation-delay:.29s}
+.test:nth-child(11){animation-delay:.32s}
+@keyframes testIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.test.running{border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.05)}
+.test.pass{border-color:rgba(16,185,129,.25)}
+.test.fail{border-color:rgba(239,68,68,.25)}
+.test.warn{border-color:rgba(251,191,36,.25)}
+.test-head{display:flex;align-items:center;gap:11px}
+.test-ico{width:22px;height:22px;flex-shrink:0;display:grid;place-items:center;color:var(--muted);transition:all .3s}
+.test-ico svg{width:13px;height:13px}
+.test.running .test-ico{color:var(--cyan);animation:icoPulse 1.3s ease-in-out infinite}
+@keyframes icoPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.test.pass .test-ico{color:var(--green)}
+.test.fail .test-ico{color:var(--red)}
+.test.warn .test-ico{color:var(--amber)}
+.test-body{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.test-name{font-size:12px;font-weight:500;color:var(--text)}
+.test-badge{
+  font-size:9px;font-weight:700;padding:2.5px 7px;border-radius:5px;
+  letter-spacing:.05em;background:rgba(255,255,255,.05);color:var(--muted);
+  font-family:'JetBrains Mono',monospace;text-transform:uppercase;flex-shrink:0;
+  transition:all .3s;
+}
+.test.pass .test-badge{color:var(--green);background:rgba(16,185,129,.12)}
+.test.fail .test-badge{color:var(--red);background:rgba(239,68,68,.12)}
+.test.warn .test-badge{color:var(--amber);background:rgba(251,191,36,.12)}
+.test.running .test-badge{color:var(--cyan);background:rgba(0,229,255,.12)}
+.test-result{
+  font-size:11px;font-family:'JetBrains Mono',monospace;
+  padding:9px 11px;border-radius:8px;margin-top:9px;
+  background:rgba(0,0,0,.25);border:1px solid var(--border);
+  display:none;line-height:1.5;white-space:pre-line;color:var(--text-2);
+}
+.test-result.show{display:block;animation:resultIn .4s cubic-bezier(.25,.9,.35,1)}
+@keyframes resultIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.test.pass .test-result{color:#6ee7b7;border-color:rgba(16,185,129,.2)}
+.test.fail .test-result{color:#fca5a5;border-color:rgba(239,68,68,.2)}
+.test.warn .test-result{color:#fcd34d;border-color:rgba(251,191,36,.2)}
+
+/* VERDICT */
+.verdict{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:24px 20px;text-align:center;margin-top:14px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  animation:verdictIn .6s cubic-bezier(.25,.9,.35,1);
+  position:relative;overflow:hidden;
+}
+@keyframes verdictIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.verdict::before{content:'';position:absolute;top:0;left:25%;right:25%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent)}
+.verdict-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.16em;font-weight:700;margin-bottom:12px}
+.verdict-score{font-family:'JetBrains Mono',monospace;font-size:40px;font-weight:700;line-height:1;margin-bottom:10px;letter-spacing:-.04em}
+.verdict-score.pass{color:var(--green);text-shadow:0 0 30px rgba(16,185,129,.4)}
+.verdict-score.warn{color:var(--amber);text-shadow:0 0 30px rgba(251,191,36,.4)}
+.verdict-score.fail{color:var(--red);text-shadow:0 0 30px rgba(239,68,68,.4)}
+.verdict-text{font-size:12.5px;color:var(--text-2);line-height:1.6;max-width:460px;margin:0 auto}
+.verdict-text b{color:#fff;font-weight:700}
+
+.foot{margin-top:40px;text-align:center;font-size:10.5px;color:var(--muted);line-height:1.7}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(110px);
+  padding:12px 20px;border-radius:12px;
+  background:rgba(20,22,30,.96);border:1px solid var(--border);
+  font-size:12.5px;font-weight:600;z-index:200;
+  transition:all .5s cubic-bezier(.25,.9,.35,1);pointer-events:none;
+  color:var(--text-2);box-shadow:0 20px 50px -20px rgba(0,0,0,.8);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:rgba(16,185,129,.35);color:#6ee7b7}
+.toast.err{border-color:rgba(239,68,68,.35);color:#fca5a5}
+
+.err-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;color:#fca5a5;font-size:11.5px;font-family:'JetBrains Mono',monospace;display:none;white-space:pre-wrap}
+.err-box.show{display:block}
+
+@media(max-width:520px){
+  .app{padding:22px 16px 50px}
+  .grid{grid-template-columns:repeat(2,1fr);gap:8px;margin:20px 0 18px}
+  .card-num{font-size:18px}
+  .brand-name{font-size:17px}
+  .hist-item{grid-template-columns:1fr;gap:6px}
+  .hist-vals{justify-content:flex-start}
+  .test-body{flex-direction:column;align-items:flex-start;gap:5px}
+  .test-badge{align-self:flex-start}
+  .set-row{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="bg-grid"></div>
+</div>
+
+<main class="app">
+
+<div class="err-box" id="errBox"></div>
+
+<header class="head">
+  <div>
+    <div class="brand-name">WRUNETTEST</div>
+    <div class="brand-sub">Network diagnostics</div>
+  </div>
+  <div class="server-pill" id="serverPill"><span class="dot"></span><span id="serverText">Поиск…</span></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab on" data-panel="speed">Speed</button>
+  <button class="tab" data-panel="dpi">DPI</button>
+  <button class="tab" data-panel="whitelist">Whitelist</button>
+</nav>
+
+<section class="panel on" id="panel-speed">
+  <section class="gauge-wrap">
+    <canvas id="gauge"></canvas>
+    <div class="readout">
+      <div class="value-row">
+        <div class="value" id="currentSpeed">0</div>
+        <div class="unit" id="unitLabel">Mbps</div>
+      </div>
+      <div class="state" id="stateText">Готово к запуску</div>
+    </div>
+  </section>
+
+  <button class="cta" id="startBtn"><span id="btnLabel">Начать тест</span></button>
+
+  <section class="grid">
+    <div class="card" data-m="ping"><div class="card-title">Ping</div><div class="card-num"><span id="pingVal">—</span></div><div class="card-unit">ms</div></div>
+    <div class="card" data-m="down"><div class="card-title">Download</div><div class="card-num"><span id="downVal">—</span></div><div class="card-unit">Mbps</div></div>
+    <div class="card" data-m="up"><div class="card-title">Upload</div><div class="card-num"><span id="upVal">—</span></div><div class="card-unit">Mbps</div></div>
+    <div class="card" data-m="jitter"><div class="card-title">Jitter</div><div class="card-num"><span id="jitterVal">—</span></div><div class="card-unit">ms</div></div>
+  </section>
+
+  <section class="hist">
+    <div class="hist-head">
+      <div class="hist-title">История</div>
+      <button class="hist-clear" id="clearBtn">Очистить</button>
+    </div>
+    <div class="hist-list" id="histList"></div>
+  </section>
+
+  <div class="set-block" id="wheelSettings">
+    <button class="set-toggle" id="setToggle">
+      <span>Настройки колеса</span>
+      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="set-body">
+      <div class="set-row">
+        <div>
+          <div class="set-label">Цвет колеса</div>
+          <div class="set-desc">Градиент активной дуги</div>
+        </div>
+        <div class="set-group" id="colorGroup">
+          <button class="set-btn active" data-color="blue">Синий</button>
+          <button class="set-btn" data-color="cyan">Cyan</button>
+          <button class="set-btn" data-color="violet">Violet</button>
+          <button class="set-btn" data-color="mint">Mint</button>
+        </div>
+      </div>
+      <div class="set-row">
+        <div>
+          <div class="set-label">Максимум шкалы</div>
+          <div class="set-desc">Верхняя граница</div>
+        </div>
+        <div class="set-group" id="scaleGroup">
+          <button class="set-btn" data-scale="100">100</button>
+          <button class="set-btn active" data-scale="500">500</button>
+          <button class="set-btn" data-scale="1000">1000</button>
+          <button class="set-btn" data-scale="2500">2500</button>
+        </div>
+      </div>
+      <div class="set-row">
+        <div>
+          <div class="set-label">Деления на дуге</div>
+          <div class="set-desc">Метки шкалы</div>
+        </div>
+        <div class="set-group" id="marksGroup">
+          <button class="set-btn active" data-marks="on">Вкл</button>
+          <button class="set-btn" data-marks="off">Выкл</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="panel-dpi">
+  <div class="suite-hero">
+    <h2>DPI / Bypass Detector</h2>
+    <p>Проверка фильтрации: <code>SNI</code>, <code>freeze</code>, <code>UDP</code>, <code>фрагментация</code>, <code>DNS</code>, <code>IP leak</code>, <code>WebRTC</code>, <code>TLS</code>, <code>MTU</code>.</p>
+    <div class="suite-progress" id="dpiProgress"><div class="suite-progress-bar" id="dpiProgressBar"></div></div>
+  </div>
+
+  <div class="tests" id="dpiTests">
+    <div class="test pending" data-test="port"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M6 8h12v6a6 6 0 0 1-12 0V8z"/></svg></div><div class="test-body"><div class="test-name">Port Reachability</div><div class="test-badge" id="b-port">pending</div></div></div><div class="test-result" id="r-port"></div></div>
+    <div class="test pending" data-test="sni"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/></svg></div><div class="test-body"><div class="test-name">SNI Filtering</div><div class="test-badge" id="b-sni">pending</div></div></div><div class="test-result" id="r-sni"></div></div>
+    <div class="test pending" data-test="freeze"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4.9 4.9l14.2 14.2M2 12h20"/></svg></div><div class="test-body"><div class="test-name">16-20KB Freeze</div><div class="test-badge" id="b-freeze">pending</div></div></div><div class="test-result" id="r-freeze"></div></div>
+    <div class="test pending" data-test="quic"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8z"/></svg></div><div class="test-body"><div class="test-name">QUIC / UDP</div><div class="test-badge" id="b-quic">pending</div></div></div><div class="test-result" id="r-quic"></div></div>
+    <div class="test pending" data-test="frag"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8 16"/></svg></div><div class="test-body"><div class="test-name">TCP Fragmentation</div><div class="test-badge" id="b-frag">pending</div></div></div><div class="test-result" id="r-frag"></div></div>
+    <div class="test pending" data-test="tls"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="test-body"><div class="test-name">TLS Handshake</div><div class="test-badge" id="b-tls">pending</div></div></div><div class="test-result" id="r-tls"></div></div>
+    <div class="test pending" data-test="tlsfrag"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h4M16 8h4M4 16h4M16 16h4M9 12h6"/></svg></div><div class="test-body"><div class="test-name">TLS Fragmentation</div><div class="test-badge" id="b-tlsfrag">pending</div></div></div><div class="test-result" id="r-tlsfrag"></div></div>
+    <div class="test pending" data-test="dns"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16"/><path d="M4 10h16M10 4v16"/></svg></div><div class="test-body"><div class="test-name">DNS Resolution</div><div class="test-badge" id="b-dns">pending</div></div></div><div class="test-result" id="r-dns"></div></div>
+    <div class="test pending" data-test="ipleak"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20"/></svg></div><div class="test-body"><div class="test-name">IP Leak</div><div class="test-badge" id="b-ipleak">pending</div></div></div><div class="test-result" id="r-ipleak"></div></div>
+    <div class="test pending" data-test="webrtc"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg></div><div class="test-body"><div class="test-name">WebRTC Leak</div><div class="test-badge" id="b-webrtc">pending</div></div></div><div class="test-result" id="r-webrtc"></div></div>
+    <div class="test pending" data-test="mtu"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg></div><div class="test-body"><div class="test-name">MTU Probe</div><div class="test-badge" id="b-mtu">pending</div></div></div><div class="test-result" id="r-mtu"></div></div>
+  </div>
+
+  <button class="cta" id="dpiBtn"><span id="dpiBtnLabel">Запустить сканирование</span></button>
+
+  <div class="verdict" id="dpiVerdict" style="display:none">
+    <div class="verdict-label">Bypass capability</div>
+    <div class="verdict-score" id="verdictScore">—</div>
+    <div class="verdict-text" id="verdictText"></div>
+  </div>
+</section>
+
+<section class="panel" id="panel-whitelist">
+  <div class="suite-hero">
+    <h2>Whitelist Check</h2>
+    <p>Режим сети: <code>обычный</code> · <code>белые списки</code> · <code>блокировка</code>. Отдельно — обход через VPN.</p>
+    <div class="suite-progress" id="wlProgress"><div class="suite-progress-bar" id="wlProgressBar"></div></div>
+  </div>
+
+  <div class="tests" id="wlTests">
+    <div class="test pending" data-test="wl-detect"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div><div class="test-body"><div class="test-name">Детекция режима</div><div class="test-badge" id="b-wl-detect">pending</div></div></div><div class="test-result" id="r-wl-detect"></div></div>
+    <div class="test pending" data-test="wl-vpn"><div class="test-head"><div class="test-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="test-body"><div class="test-name">Обход VPN</div><div class="test-badge" id="b-wl-vpn">pending</div></div></div><div class="test-result" id="r-wl-vpn"></div></div>
+  </div>
+
+  <button class="cta" id="wlBtn"><span id="wlBtnLabel">Проверить</span></button>
+
+  <div class="verdict" id="wlVerdict" style="display:none">
+    <div class="verdict-label">Результат</div>
+    <div class="verdict-score" id="wlScore">—</div>
+    <div class="verdict-text" id="wlText"></div>
+  </div>
+</section>
+
+<footer class="foot">Cloudflare global network · Данные не покидают браузер</footer>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var CF='https://speed.cloudflare.com';
+var GLOBAL_TIMEOUT=45000;
+
+var COLORS={
+  blue:{a:'#4f46e5',b:'#7c5ff7',c:'#00e5ff',shadow:'rgba(79,70,229,.6)'},
+  cyan:{a:'#00e5ff',b:'#00b5e5',c:'#4f46e5',shadow:'rgba(0,229,255,.6)'},
+  violet:{a:'#8b5cf6',b:'#a875f7',c:'#f43f5e',shadow:'rgba(139,92,246,.6)'},
+  mint:{a:'#10b981',b:'#00e5ff',c:'#4f46e5',shadow:'rgba(16,185,129,.6)'}
+};
+
+function showErr(msg){
+  var box=document.getElementById('errBox');
+  if(box){box.textContent='ОШИБКА: '+msg;box.classList.add('show');}
+}
+window.addEventListener('error',function(e){showErr((e.message||'unknown'))});
+
+try{
+  var settings=JSON.parse(localStorage.getItem('wrunet_settings')||'null')||{
+    duration:4,threads:4,pingCount:8,wheelColor:'blue',wheelScale:500,wheelMarks:'on'
+  };
+  if(!settings.wheelColor)settings.wheelColor='blue';
+  if(!settings.wheelScale)settings.wheelScale=500;
+  if(!settings.wheelMarks)settings.wheelMarks='on';
+
+  var state={
+    running:false,abort:false,
+    ping:null,jitter:null,loss:null,pktSent:0,pktLost:0,
+    dl:null,ul:null,
+    history:JSON.parse(localStorage.getItem('wrunet_history')||'[]'),
+    dpi:{running:false},wl:{running:false}
+  };
+  function $(id){return document.getElementById(id)}
+  var el={
+    btn:$('startBtn'),btnLabel:$('btnLabel'),speed:$('currentSpeed'),unitLabel:$('unitLabel'),state:$('stateText'),
+    ping:$('pingVal'),jitter:$('jitterVal'),dl:$('downVal'),ul:$('upVal'),
+    server:$('serverText'),serverPill:$('serverPill'),hist:$('histList'),clear:$('clearBtn'),
+    gauge:$('gauge'),
+    dpiBtn:$('dpiBtn'),dpiBtnLabel:$('dpiBtnLabel'),
+    dpiProgress:$('dpiProgress'),dpiProgressBar:$('dpiProgressBar'),
+    dpiVerdict:$('dpiVerdict'),verdictScore:$('verdictScore'),verdictText:$('verdictText'),
+    wlBtn:$('wlBtn'),wlBtnLabel:$('wlBtnLabel'),
+    wlProgress:$('wlProgress'),wlProgressBar:$('wlProgressBar'),
+    wlVerdict:$('wlVerdict'),wlScore:$('wlScore'),wlText:$('wlText'),
+    toast:$('toast'),
+    wheelSettings:$('wheelSettings'),setToggle:$('setToggle'),
+    colorGroup:$('colorGroup'),scaleGroup:$('scaleGroup'),marksGroup:$('marksGroup')
+  };
+  if(!el.gauge||!el.btn){showErr('DOM not ready');return}
+  var gCtx=el.gauge.getContext('2d');
+  var DPR=Math.min(window.devicePixelRatio||1,2);
+
+  function setState(t,live){el.state.textContent=t;el.state.classList.toggle('live',!!live)}
+  function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+  function safeFetch(url,opts,ms){
+    var ctrl=new AbortController();
+    var timer=setTimeout(function(){try{ctrl.abort()}catch(e){}},ms||3000);
+    var merged=Object.assign({},opts||{},{signal:ctrl.signal});
+    return fetch(url,merged).finally(function(){clearTimeout(timer)});
+  }
+  function showToast(msg,type){
+    el.toast.textContent=msg;
+    el.toast.className='toast show '+(type||'info');
+    clearTimeout(window.__toastT);
+    window.__toastT=setTimeout(function(){el.toast.classList.remove('show')},2500);
+  }
+  function saveSettings(){try{localStorage.setItem('wrunet_settings',JSON.stringify(settings))}catch(e){}}
+  function animateNumber(node,from,to,dur,decimals){
+    var start=performance.now();
+    var diff=to-from;
+    if(node.__raf)cancelAnimationFrame(node.__raf);
+    function step(now){
+      var t=Math.min((now-start)/dur,1);
+      var eased=1-Math.pow(1-t,3);
+      var cur=from+diff*eased;
+      node.textContent=cur.toFixed(decimals);
+      if(t<1)node.__raf=requestAnimationFrame(step);
+    }
+    node.__raf=requestAnimationFrame(step);
+  }
+  function setSpeed(v){
+    var num=v,unit='Mbps';
+    if(v>=1000){num=v/1000;unit='Gbps'}
+    else if(v<1&&v>0){num=v*1000;unit='Kbps'}
+    var decimals=num>=100?0:num>=10?1:2;
+    var prev=parseFloat(el.speed.textContent)||0;
+    if(Math.abs(prev-num)>0.05){animateNumber(el.speed,prev,num,180,decimals)}
+    else{el.speed.textContent=num.toFixed(decimals)}
+    if(el.unitLabel.textContent!==unit){el.unitLabel.textContent=unit}
+    el.speed.classList.toggle('active',v>0.5);
+  }
+
+  document.querySelectorAll('.tab').forEach(function(tab){
+    tab.addEventListener('click',function(){
+      document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on')});
+      document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on')});
+      tab.classList.add('on');
+      var panel=document.getElementById('panel-'+tab.dataset.panel);
+      if(panel)panel.classList.add('on');
+      if(tab.dataset.panel==='speed'){gaugeDims=null;drawGaugeStatic(gaugeAnim.current)}
+    });
+  });
+
+  // GAUGE с pulse-эффектом
+  var gaugeDims=null;
+  var gaugeAnim={current:0,target:0};
+  var gaugeRAF=null;
+  function drawGaugeLoop(){
+    var c=el.gauge,ctx=gCtx;
+    var r=c.getBoundingClientRect();
+    if(r.width===0){gaugeRAF=null;return;}
+    if(!gaugeDims||gaugeDims.w!==r.width||gaugeDims.h!==r.height){
+      c.width=r.width*DPR;c.height=r.height*DPR;
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+      gaugeDims={w:r.width,h:r.height};
+    }
+    var w=r.width,h=r.height;
+    ctx.clearRect(0,0,w,h);
+    var cx=w/2,cy=h*0.60;
+    var R=Math.min(w*0.42,h*0.62);
+    var diff=gaugeAnim.target-gaugeAnim.current;
+    if(Math.abs(diff)>0.3){gaugeAnim.current+=diff*0.10}
+    else{gaugeAnim.current=gaugeAnim.target}
+    var val=gaugeAnim.current;
+    var MAX=settings.wheelScale;
+    var ratio=Math.max(0,Math.min(val/MAX,1));
+    var start=Math.PI*0.85,end=Math.PI*2.15,total=end-start;
+    var vEnd=start+total*ratio;
+    var preset=COLORS[settings.wheelColor]||COLORS.blue;
+    var thick=16;
+
+    if(settings.wheelMarks==='on'){
+      ctx.lineCap='butt';
+      for(var i=0;i<=10;i++){
+        var t=i/10,a=start+total*t;
+        var r1=R-thick/2-8,r2=R-thick/2-14;
+        ctx.strokeStyle=i%5===0?'rgba(255,255,255,.22)':'rgba(255,255,255,.08)';
+        ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1);ctx.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);ctx.stroke();
+      }
+    }
+
+    ctx.lineCap='round';
+    // фон
+    ctx.lineWidth=thick;
+    ctx.strokeStyle='rgba(255,255,255,.05)';
+    ctx.beginPath();ctx.arc(cx,cy,R,start,end);ctx.stroke();
+
+    // активная дуга
+    if(ratio>0.001){
+      var grad=ctx.createLinearGradient(cx-R,cy-R,cx+R,cy-R);
+      grad.addColorStop(0,preset.a);
+      grad.addColorStop(0.55,preset.b);
+      grad.addColorStop(1,preset.c);
+      ctx.shadowBlur=22;ctx.shadowColor=preset.shadow;
+      ctx.lineWidth=thick;ctx.strokeStyle=grad;
+      ctx.beginPath();ctx.arc(cx,cy,R,start,vEnd);ctx.stroke();
+      ctx.shadowBlur=0;
+    }
+
+    // точка с glow
+    var knobX=cx+Math.cos(vEnd)*R,knobY=cy+Math.sin(vEnd)*R;
+    var glow=ctx.createRadialGradient(knobX,knobY,0,knobX,knobY,24);
+    glow.addColorStop(0,'rgba(255,255,255,.9)');
+    glow.addColorStop(0.4,preset.shadow);
+    glow.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=glow;ctx.beginPath();ctx.arc(knobX,knobY,24,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.shadowBlur=16;ctx.shadowColor='rgba(255,255,255,1)';
+    ctx.beginPath();ctx.arc(knobX,knobY,6,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+
+    if(Math.abs(gaugeAnim.target-gaugeAnim.current)>0.3){gaugeRAF=requestAnimationFrame(drawGaugeLoop)}
+    else{gaugeRAF=null}
+  }
+  function drawGauge(val){gaugeAnim.target=val;if(!gaugeRAF)gaugeRAF=requestAnimationFrame(drawGaugeLoop)}
+  function drawGaugeStatic(val){gaugeAnim.current=val;gaugeAnim.target=val;drawGaugeLoop()}
+
+  // SETTINGS
+  el.setToggle.addEventListener('click',function(){el.wheelSettings.classList.toggle('open')});
+  function loadSettingsUI(){
+    document.querySelectorAll('#colorGroup .set-btn').forEach(function(b){b.classList.toggle('active',b.dataset.color===settings.wheelColor)});
+    document.querySelectorAll('#scaleGroup .set-btn').forEach(function(b){b.classList.toggle('active',parseInt(b.dataset.scale,10)===settings.wheelScale)});
+    document.querySelectorAll('#marksGroup .set-btn').forEach(function(b){b.classList.toggle('active',b.dataset.marks===settings.wheelMarks)});
+  }
+  el.colorGroup.addEventListener('click',function(e){
+    var t=e.target.closest('.set-btn');if(!t)return;
+    settings.wheelColor=t.dataset.color;saveSettings();loadSettingsUI();drawGaugeStatic(gaugeAnim.current);
+  });
+  el.scaleGroup.addEventListener('click',function(e){
+    var t=e.target.closest('.set-btn');if(!t)return;
+    settings.wheelScale=parseInt(t.dataset.scale,10);saveSettings();loadSettingsUI();drawGaugeStatic(gaugeAnim.current);
+  });
+  el.marksGroup.addEventListener('click',function(e){
+    var t=e.target.closest('.set-btn');if(!t)return;
+    settings.wheelMarks=t.dataset.marks;saveSettings();loadSettingsUI();drawGaugeStatic(gaugeAnim.current);
+  });
+
+  function activeCard(m){document.querySelectorAll('.card').forEach(function(c){c.classList.remove('on')});var c=document.querySelector('.card[data-m="'+m+'"]');if(c)c.classList.add('on')}
+  function doneCard(m){var c=document.querySelector('.card[data-m="'+m+'"]');if(c){c.classList.remove('on');c.classList.add('ok')}}
+  function resetCards(){document.querySelectorAll('.card').forEach(function(c){c.classList.remove('on','ok')});['ping','jitter','dl','ul'].forEach(function(k){if(el[k])el[k].textContent='—'})}
+
+  async function pingTest(){
+    activeCard('ping');setState('Измерение задержки…',true);
+    var samples=[],lost=0;
+    for(var i=0;i<settings.pingCount;i++){
+      if(state.abort)return;
+      var t0=performance.now();
+      try{await safeFetch(CF+'/__down?bytes=1&r='+Math.random(),{cache:'no-store'},2500);samples.push(performance.now()-t0)}
+      catch(e){lost++}
+      await sleep(20);
+    }
+    state.pktSent=settings.pingCount;state.pktLost=lost;
+    if(!samples.length){state.ping=0;state.jitter=0;state.loss=100}
+    else{
+      samples.sort(function(a,b){return a-b});
+      var trimmed=samples.length>2?samples.slice(1,samples.length-1):samples;
+      var avg=trimmed.reduce(function(a,b){return a+b},0)/trimmed.length;
+      state.ping=Math.round(avg);
+      var js=0;for(var k=1;k<samples.length;k++)js+=Math.abs(samples[k]-samples[k-1]);
+      state.jitter=Math.round(js/Math.max(1,samples.length-1));
+      state.loss=Math.round(lost/state.pktSent*1000)/10;
+    }
+    el.ping.textContent=state.ping;el.jitter.textContent=state.jitter;
+    doneCard('ping');doneCard('jitter');
+  }
+
+  async function downloadTest(){
+    activeCard('down');setState('Тест скачивания…',true);
+    var DURATION=settings.duration*1000,THREADS=settings.threads,CHUNK=2*1024*1024;
+    var t0=performance.now(),totalBytes=0;
+    var tBytes=Array(THREADS).fill(0),tStart=Array(THREADS).fill(0);
+    var timer=setInterval(function(){
+      var now=performance.now(),inst=0;
+      for(var i=0;i<THREADS;i++){if(tStart[i]){var dt=(now-tStart[i])/1000;if(dt>0)inst+=tBytes[i]/dt}}
+      var mbps=inst*8/1e6;
+      if(mbps>0){setSpeed(mbps);drawGauge(mbps)}
+    },100);
+    async function worker(i){
+      tStart[i]=performance.now();
+      while(performance.now()-t0<DURATION&&!state.abort){
+        try{
+          var r=await safeFetch(CF+'/__down?bytes='+CHUNK+'&r='+Math.random(),{cache:'no-store'},3000);
+          var reader=r.body.getReader();
+          while(true){var rd=await reader.read();if(rd.done)break;if(rd.value){totalBytes+=rd.value.length;tBytes[i]+=rd.value.length}}
+        }catch(e){}
+      }
+    }
+    await Promise.all(Array.from({length:THREADS},function(_,i){return worker(i)}));
+    clearInterval(timer);
+    var tt=(performance.now()-t0)/1000;
+    var avg=tt>0?totalBytes*8/tt/1e6:0;
+    state.dl=Math.round(avg*100)/100;
+    el.dl.textContent=state.dl;setSpeed(avg);drawGauge(avg);
+    doneCard('down');await sleep(200);
+  }
+
+  async function uploadTest(){
+    activeCard('up');setState('Тест загрузки…',true);
+    var DURATION=settings.duration*1000,THREADS=Math.max(2,settings.threads-1),CHUNK=1024*1024;
+    var t0=performance.now(),totalBytes=0;
+    var tBytes=Array(THREADS).fill(0),tStart=Array(THREADS).fill(0);
+    var payload=new Uint8Array(CHUNK);crypto.getRandomValues(payload.subarray(0,32768));
+    var timer=setInterval(function(){
+      var now=performance.now(),inst=0;
+      for(var i=0;i<THREADS;i++){if(tStart[i]){var dt=(now-tStart[i])/1000;if(dt>0)inst+=tBytes[i]/dt}}
+      var mbps=inst*8/1e6;
+      if(mbps>0){setSpeed(mbps);drawGauge(mbps)}
+    },100);
+    async function worker(i){
+      tStart[i]=performance.now();
+      while(performance.now()-t0<DURATION&&!state.abort){
+        try{
+          await safeFetch(CF+'/__up',{method:'POST',body:payload,headers:{'Content-Type':'application/octet-stream'}},2500);
+          totalBytes+=CHUNK;tBytes[i]+=CHUNK;
+        }catch(e){}
+      }
+    }
+    await Promise.all(Array.from({length:THREADS},function(_,i){return worker(i)}));
+    clearInterval(timer);
+    var tt=(performance.now()-t0)/1000;
+    var avg=tt>0?totalBytes*8/tt/1e6:0;
+    state.ul=Math.round(avg*100)/100;
+    el.ul.textContent=state.ul;setSpeed(avg);drawGauge(avg);
+    doneCard('up');
+  }
+
+  async function runSpeedTest(){
+    if(state.running)return;
+    state.running=true;state.abort=false;
+    el.btn.classList.add('live');el.btnLabel.textContent='Остановить';
+    resetCards();setSpeed(0);drawGaugeStatic(0);
+    var gt=setTimeout(function(){state.abort=true;setState('Остановлено по таймауту')},GLOBAL_TIMEOUT);
+    var t0=performance.now();
+    try{
+      await pingTest();
+      if(!state.abort)await downloadTest();
+      if(!state.abort)await uploadTest();
+      var totalTime=((performance.now()-t0)/1000).toFixed(1);
+      setState('Готово за '+totalTime+' сек',false);
+      saveHistory();
+      showToast('Тест завершён','ok');
+      await sleep(300);
+    }catch(err){
+      setState('Ошибка',false);
+      showToast('Ошибка','err');
+    }finally{
+      clearTimeout(gt);
+      state.running=false;el.btn.classList.remove('live');
+      el.btnLabel.textContent='Начать тест';
+      el.speed.classList.remove('active');
+    }
+  }
+
+  function saveHistory(){
+    var entry={t:Date.now(),ping:state.ping,jitter:state.jitter,loss:state.loss,download:state.dl,upload:state.ul};
+    state.history.unshift(entry);
+    if(state.history.length>15)state.history.pop();
+    try{localStorage.setItem('wrunet_history',JSON.stringify(state.history))}catch(e){}
+    renderHistory();
+  }
+  function renderHistory(){
+    if(!state.history.length){el.hist.innerHTML='<div class="hist-empty">Пока нет тестов</div>';return}
+    el.hist.innerHTML=state.history.map(function(h){
+      var d=new Date(h.t);
+      var time=d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+      var date=d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'});
+      return '<div class="hist-item"><div class="hist-time">'+date+' · '+time+'</div><div class="hist-vals"><span>↓ <b>'+h.download+'</b></span><span>↑ <b>'+h.upload+'</b></span><span>ping <b>'+h.ping+'</b></span></div></div>';
+    }).join('');
+  }
+
+  async function detectServer(){
+    try{
+      var t0=performance.now();
+      var res=await safeFetch(CF+'/__down?bytes=1&r='+Math.random(),{cache:'no-store'},4000);
+      var ping=Math.round(performance.now()-t0);
+      var colo=res.headers.get('cf-meta-colo')||(res.headers.get('cf-ray')||'').split('-')[1]||'';
+      el.server.textContent=colo?(colo+' · '+ping+' ms'):('Cloudflare · '+ping+' ms');
+    }catch(e){el.server.textContent='недоступен'}
+  }
+
+  function setTestState(name,status,text){
+    var node=document.querySelector('.test[data-test="'+name+'"]');
+    var badge=$('b-'+name);
+    var res=$('r-'+name);
+    if(!node)return;
+    node.classList.remove('pending','running','pass','fail','warn');
+    node.classList.add(status);
+    if(badge)badge.textContent=status;
+    if(res&&text!==undefined){res.textContent=text;res.classList.add('show')}
+  }
+
+  async function testPort(){setTestState('port','running');var t0=performance.now();try{var res=await safeFetch(CF+'/__down?bytes=1&r='+Math.random(),{cache:'no-store'},3000);var ping=Math.round(performance.now()-t0);setTestState('port','pass','TCP:443 · '+ping+' ms');return 'pass'}catch(e){setTestState('port','fail','TCP:443 закрыт');return 'fail'}}
+  async function testSNI(){setTestState('sni','running');var targets=[{url:'https://www.google.com/generate_204',name:'google'},{url:'https://cloudflare.com/cdn-cgi/trace',name:'cloudflare'},{url:'https://www.wikipedia.org/',name:'wiki'},{url:'https://www.youtube.com',name:'youtube'}];var blocked=0,ok=0,details=[];for(var i=0;i<targets.length;i++){var t=targets[i];try{await safeFetch(t.url,{mode:'no-cors',cache:'no-store'},2500);ok++;details.push('+ '+t.name)}catch(e){blocked++;details.push('- '+t.name)}}var s,txt;if(blocked===0){s='pass';txt='OK · '+ok+'/'+targets.length} else if(ok===0){s='fail';txt='Блок · '+blocked+'/'+targets.length} else {s='warn';txt='Частично · '+ok+'/'+targets.length}setTestState('sni',s,txt+'\n'+details.join('\n'));return s}
+  async function testFreeze(){setTestState('freeze','running');try{var res=await safeFetch(CF+'/__down?bytes=65536&r='+Math.random(),{cache:'no-store'},3500);var reader=res.body.getReader();var received=0,t0=performance.now();while(true){var rd=await reader.read();if(rd.done)break;if(rd.value)received+=rd.value.length;if(performance.now()-t0>3500)break}var s,txt;if(received>=60000){s='pass';txt='Нет обрыва · '+(received/1024).toFixed(0)+' KB'} else if(received>=14000&&received<=24000){s='fail';txt='Обрыв · '+(received/1024).toFixed(0)+' KB'} else {s='warn';txt='Частично · '+(received/1024).toFixed(0)+' KB'}setTestState('freeze',s,txt);return s}catch(e){setTestState('freeze','warn','Таймаут');return 'warn'}}
+  async function testQUIC(){setTestState('quic','running');return new Promise(function(r){var done=false;var t=setTimeout(function(){if(done)return;done=true;setTestState('quic','warn','timeout');r('warn')},3000);try{var pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.cloudflare.com:3478'}]});pc.onicecandidate=function(e){if(done)return;if(e.candidate){done=true;clearTimeout(t);try{pc.close()}catch(_){}setTestState('quic','pass','UDP OK');r('pass')}};pc.createDataChannel('p');pc.createOffer().then(function(o){return pc.setLocalDescription(o)}).catch(function(){if(done)return;done=true;clearTimeout(t);setTestState('quic','warn','недоступен');r('warn')})}catch(e){if(done)return;done=true;clearTimeout(t);setTestState('quic','warn','нет WebRTC');r('warn')}})}
+  async function testFragment(){setTestState('frag','running');var sizes=[1200,1400,1500,4096],ok=0;for(var i=0;i<sizes.length;i++){try{await safeFetch(CF+'/__down?bytes='+sizes[i]+'&r='+Math.random(),{cache:'no-store'},2000);ok++}catch(e){}}var s,txt;if(ok===sizes.length){s='pass';txt='OK · '+ok+'/'+sizes.length} else if(ok===0){s='fail';txt='Блок'} else {s='warn';txt='Частично · '+ok+'/'+sizes.length}setTestState('frag',s,txt);return s}
+  async function testTLS(){setTestState('tls','running');try{var t0=performance.now();await safeFetch('https://cloudflare.com/cdn-cgi/trace',{cache:'no-store'},3000);var dt=Math.round(performance.now()-t0);setTestState('tls','pass','TLS 1.3 · '+dt+' ms');return 'pass'}catch(e){setTestState('tls','fail','Блок');return 'fail'}}
+  async function testTLSFrag(){setTestState('tlsfrag','running');try{var t0=performance.now();await safeFetch('https://cloudflare.com/cdn-cgi/trace',{cache:'no-store'},3000);var dt=Math.round(performance.now()-t0);var s=dt<300?'pass':'warn';setTestState('tlsfrag',s,s==='pass'?'OK · '+dt+' ms':'Медленно · '+dt+' ms');return s}catch(e){setTestState('tlsfrag','fail','Блок');return 'fail'}}
+  async function testDNS(){setTestState('dns','running');try{var t0=performance.now();var res=await safeFetch('https://1.1.1.1/dns-query?name=example.com&type=A',{headers:{'accept':'application/dns-json'},cache:'no-store'},3000);var data=await res.json();var dt=Math.round(performance.now()-t0);var ip=data.Answer&&data.Answer[0]?data.Answer[0].data:'—';setTestState('dns','pass','DoH · '+dt+' ms\n→ '+ip);return 'pass'}catch(e){setTestState('dns','warn','недоступен');return 'warn'}}
+  async function testIPLeak(){setTestState('ipleak','running');try{var res=await safeFetch('https://cloudflare.com/cdn-cgi/trace',{cache:'no-store'},3000);var text=await res.text();var ip='—',loc='—',warp='—';text.split('\n').forEach(function(l){if(l.indexOf('ip=')===0)ip=l.slice(3);if(l.indexOf('loc=')===0)loc=l.slice(4);if(l.indexOf('warp=')===0)warp=l.slice(5)});setTestState('ipleak','pass','IP: '+ip+'\nLoc: '+loc+'\nWARP: '+warp);return 'pass'}catch(e){setTestState('ipleak','warn','Ошибка');return 'warn'}}
+  async function testWebRTC(){setTestState('webrtc','running');return new Promise(function(r){var done=false,ips=[];var t=setTimeout(function(){if(done)return;done=true;var s=ips.length?'warn':'pass';setTestState('webrtc',s,ips.length?'Утечка: '+ips.join(', '):'Чисто');r(s)},3000);try{var pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.cloudflare.com:3478'}]});pc.onicecandidate=function(e){if(done)return;if(e.candidate&&e.candidate.candidate){var p=e.candidate.candidate.split(' ');var ip=p[4];if(ip&&ip.indexOf('0.')!==0&&ips.indexOf(ip)===-1)ips.push(ip)}};pc.createDataChannel('p');pc.createOffer().then(function(o){return pc.setLocalDescription(o)}).catch(function(){if(done)return;done=true;clearTimeout(t);setTestState('webrtc','warn','недоступен');r('warn')})}catch(e){if(done)return;done=true;clearTimeout(t);setTestState('webrtc','warn','нет WebRTC');r('warn')}})}
+  async function testMTU(){setTestState('mtu','running');var sizes=[1200,1400,1472,1500,9000],maxOk=0;for(var i=0;i<sizes.length;i++){try{await safeFetch(CF+'/__down?bytes='+sizes[i]+'&r='+Math.random(),{cache:'no-store'},2000);maxOk=sizes[i]}catch(e){break}}var s,txt;if(maxOk>=1500){s='pass';txt='MTU ≥ 1500'} else if(maxOk>=1400){s='warn';txt='MTU ~'+maxOk} else {s='warn';txt='MTU '+maxOk}setTestState('mtu',s,txt);return s}
+
+  async function runDPIScan(){
+    if(state.dpi.running)return;
+    state.dpi.running=true;
+    el.dpiBtn.disabled=true;el.dpiBtnLabel.textContent='Сканирование…';
+    el.dpiVerdict.style.display='none';
+    el.dpiProgress.classList.add('on');el.dpiProgressBar.style.width='0%';
+    var names=['port','sni','freeze','quic','frag','tls','tlsfrag','dns','ipleak','webrtc','mtu'];
+    names.forEach(function(n){setTestState(n,'pending','');var r=$('r-'+n);if(r){r.textContent='';r.classList.remove('show')}var b=$('b-'+n);if(b)b.textContent='pending'});
+    var tests=[{n:'port',f:testPort},{n:'sni',f:testSNI},{n:'freeze',f:testFreeze},{n:'quic',f:testQUIC},{n:'frag',f:testFragment},{n:'tls',f:testTLS},{n:'tlsfrag',f:testTLSFrag},{n:'dns',f:testDNS},{n:'ipleak',f:testIPLeak},{n:'webrtc',f:testWebRTC},{n:'mtu',f:testMTU}];
+    var results={};
+    for(var i=0;i<tests.length;i++){
+      try{results[tests[i].n]=await tests[i].f()}catch(e){results[tests[i].n]='warn'}
+      el.dpiProgressBar.style.width=((i+1)/tests.length*100)+'%';
+    }
+    var pass=0,fail=0,warn=0;
+    Object.keys(results).forEach(function(k){if(results[k]==='pass')pass++;else if(results[k]==='fail')fail++;else warn++});
+    var score=Math.round(pass*100/tests.length);
+    var cls,txt;
+    if(fail===0&&warn<=2){cls='pass';txt='Провайдер не фильтрует жёстко. Пройдено: <b>'+pass+'/'+tests.length+'</b>.'}
+    else if(fail<=1){cls='warn';txt='Есть фильтрация. Рекомендуется VLESS+Reality или Hysteria2. Пройдено: <b>'+pass+'/'+tests.length+'</b>.'}
+    else{cls='fail';txt='Жёсткий DPI. Нужен обход: VLESS+Reality, zapret или xray. Пройдено: <b>'+pass+'/'+tests.length+'</b>.'}
+    el.verdictScore.textContent=score+'%';
+    el.verdictScore.className='verdict-score '+cls;
+    el.verdictText.innerHTML=txt;
+    el.dpiVerdict.style.display='block';
+    state.dpi.running=false;
+    el.dpiBtn.disabled=false;el.dpiBtnLabel.textContent='Запустить сканирование';
+    setTimeout(function(){el.dpiProgress.classList.remove('on');el.dpiProgressBar.style.width='0%'},1000);
+    showToast('DPI: '+score+'%',cls==='fail'?'err':'ok');
+  }
+
+  async function testWlDetect(){
+    setTestState('wl-detect','running');
+    var ru=[{u:'https://max.ru',n:'max.ru'},{u:'https://vk.com',n:'vk.com'},{u:'https://ya.ru',n:'ya.ru'},{u:'https://gosuslugi.ru',n:'gosuslugi'},{u:'https://mail.ru',n:'mail.ru'}];
+    var bl=[{u:'https://www.google.com/generate_204',n:'google'},{u:'https://www.youtube.com',n:'youtube'},{u:'https://www.instagram.com',n:'instagram'},{u:'https://www.facebook.com',n:'facebook'},{u:'https://telegram.org',n:'telegram'}];
+    var ruOk=0,blOk=0,rd=[],bd=[];
+    for(var i=0;i<ru.length;i++){try{await safeFetch(ru[i].u,{mode:'no-cors',cache:'no-store'},2000);ruOk++;rd.push('+ '+ru[i].n)}catch(e){rd.push('- '+ru[i].n)}}
+    for(var j=0;j<bl.length;j++){try{await safeFetch(bl[j].u,{mode:'no-cors',cache:'no-store'},2000);blOk++;bd.push('+ '+bl[j].n)}catch(e){bd.push('- '+bl[j].n)}}
+    var mode,s,txt;
+    if(ruOk===ru.length&&blOk===0){mode='whitelist';s='fail';txt='БЕЛЫЕ СПИСКИ\nРФ ('+ruOk+'/'+ru.length+'):\n'+rd.join('\n')+'\nЗаблок. ('+blOk+'/'+bl.length+'):\n'+bd.join('\n')}
+    else if(ruOk===ru.length&&blOk===bl.length){mode='normal';s='pass';txt='ОБЫЧНЫЙ интернет\nРФ: OK\nЗаблок.: OK'}
+    else if(ruOk<ru.length){mode='blocked';s='fail';txt='БЛОКИРОВКА\nРФ ('+ruOk+'/'+ru.length+'):\n'+rd.join('\n')}
+    else{mode='partial';s='warn';txt='ЧАСТИЧНО\nРФ: '+ruOk+'/'+ru.length+'\nЗаблок.: '+blOk+'/'+bl.length+'\n'+bd.join('\n')}
+    setTestState('wl-detect',s,txt);
+    return {mode:mode,ruOk:ruOk,blOk:blOk};
+  }
+  async function testWlVPN(){
+    setTestState('wl-vpn','running');
+    var t=[{u:'https://www.google.com/generate_204',n:'google'},{u:'https://www.youtube.com',n:'youtube'},{u:'https://www.instagram.com',n:'instagram'},{u:'https://www.facebook.com',n:'facebook'},{u:'https://cloudflare.com/cdn-cgi/trace',n:'cloudflare'}];
+    var ok=0,d=[];
+    for(var i=0;i<t.length;i++){try{await safeFetch(t[i].u,{mode:'no-cors',cache:'no-store'},2500);ok++;d.push('+ '+t[i].n)}catch(e){d.push('- '+t[i].n)}}
+    var s,txt;
+    if(ok===t.length){s='pass';txt='Обходит всё · '+ok+'/'+t.length}
+    else if(ok===0){s='fail';txt='Не обходит · 0/'+t.length}
+    else{s='warn';txt='Частично · '+ok+'/'+t.length}
+    setTestState('wl-vpn',s,txt+'\n'+d.join('\n'));
+    return {ok:ok,total:t.length};
+  }
+
+  async function runWlScan(){
+    if(state.wl.running)return;
+    state.wl.running=true;
+    el.wlBtn.disabled=true;el.wlBtnLabel.textContent='Проверка…';
+    el.wlVerdict.style.display='none';
+    el.wlProgress.classList.add('on');el.wlProgressBar.style.width='0%';
+    ['wl-detect','wl-vpn'].forEach(function(n){setTestState(n,'pending','');var r=$('r-'+n);if(r){r.textContent='';r.classList.remove('show')}var b=$('b-'+n);if(b)b.textContent='pending'});
+    var dr=await testWlDetect();
+    el.wlProgressBar.style.width='50%';
+    await sleep(150);
+    var vr=await testWlVPN();
+    el.wlProgressBar.style.width='100%';
+    var mode=dr.mode,vpnOk=vr.ok===vr.total;
+    var score,cls,txt;
+    if(mode==='whitelist'){
+      if(vpnOk){cls='warn';score='ОБХОД';txt='<b>Белые списки включены.</b> VPN обходит их.'}
+      else{cls='fail';score='НЕТ';txt='<b>Белые списки включены.</b> VPN не обходит. Нужен VLESS+Reality на российском VPS.'}
+    }else if(mode==='normal'){
+      if(vpnOk){cls='pass';score='ОК';txt='<b>Белые списки не включены.</b> VPN работает нормально.'}
+      else{cls='warn';score='ЧАСТИЧНО';txt='<b>Белые списки не включены.</b> VPN обходит не всё.'}
+    }else if(mode==='blocked'){
+      cls='fail';score='БЛОК';txt='<b>Полная блокировка сети.</b> Даже российские сервисы недоступны.'
+    }else{
+      if(vpnOk){cls='warn';score='ЧАСТИЧНО';txt='<b>Частичная фильтрация.</b> VPN обходит большинство блокировок.'}
+      else{cls='fail';score='ПРОБЛЕМА';txt='<b>Частичная фильтрация.</b> VPN не справляется.'}
+    }
+    el.wlScore.textContent=score;
+    el.wlScore.className='verdict-score '+cls;
+    el.wlText.innerHTML=txt;
+    el.wlVerdict.style.display='block';
+    state.wl.running=false;
+    el.wlBtn.disabled=false;el.wlBtnLabel.textContent='Проверить';
+    setTimeout(function(){el.wlProgress.classList.remove('on');el.wlProgressBar.style.width='0%'},1000);
+    showToast('Готово',cls==='fail'?'err':'ok');
+  }
+
+  el.btn.addEventListener('click',function(){
+    if(state.running){state.abort=true;setState('Остановка…')}
+    else runSpeedTest();
+  });
+  el.clear.addEventListener('click',function(){
+    state.history=[];try{localStorage.removeItem('wrunet_history')}catch(e){}renderHistory();
+  });
+  el.dpiBtn.addEventListener('click',runDPIScan);
+  el.wlBtn.addEventListener('click',runWlScan);
+  el.serverPill.addEventListener('click',detectServer);
+
+  document.addEventListener('keydown',function(e){
+    if(e.code==='Space'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){
+      e.preventDefault();
+      if(!state.running)runSpeedTest();
+    }
+    if(e.code==='Escape'&&state.running){state.abort=true;setState('Остановка…')}
+  });
+
+  window.addEventListener('resize',function(){
+    clearTimeout(window.__rt);
+    window.__rt=setTimeout(function(){gaugeDims=null;drawGaugeStatic(gaugeAnim.current)},150);
+  });
+
+  loadSettingsUI();
+  renderHistory();
+  detectServer();
+  setInterval(detectServer,60000);
+  setTimeout(function(){drawGaugeStatic(0)},100);
+
+}catch(err){
+  showErr('Init failed: '+(err.message||err));
+}
+})();
+</script>
+</body>
+</html>
